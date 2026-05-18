@@ -128,7 +128,7 @@ public sealed class RuleEvaluator
     private static object CoerceValue(string raw)
     {
         if (bool.TryParse(raw, out bool b)) return b;
-        if (long.TryParse(raw, out long l)) return l;
+        if (int.TryParse(raw, out int i)) return i;
         if (double.TryParse(raw,
                 System.Globalization.NumberStyles.Float,
                 System.Globalization.CultureInfo.InvariantCulture,

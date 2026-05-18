@@ -66,8 +66,8 @@ var arithData = new Dictionary<string, string>
     ["TaxRate"]  = "0.07",
 };
 
-RunTest("Price after discount",        "[Price] - [Discount]",                          arithData, expected: 85L);
-RunTest("Total before tax",            "[Price] * [Qty]",                               arithData, expected: 300L);
+RunTest("Price after discount",        "[Price] - [Discount]",                          arithData, expected: 85);
+RunTest("Total before tax",            "[Price] * [Qty]",                               arithData, expected: 300);
 RunTest("Total with tax (double)",     "([Price] * [Qty]) * (1 + [TaxRate])",           arithData, expected: 321.0);
 RunTest("Discount %",                  "[Discount] / [Price] * 100",                    arithData, expected: 15.0);
 RunTest("Price after discount > 80",   "[Price] - [Discount] > 80",                     arithData, expected: true);
@@ -243,8 +243,8 @@ RunTest("Abs(Z)",        "Abs([Z])",               mathData, expected: 4.5);
 RunTest("Floor(Z)",      "Floor([Z])",             mathData, expected: -5.0);
 RunTest("Ceiling(Z)",    "Ceiling([Z])",           mathData, expected: -4.0);
 RunTest("Round(Z, 0)",   "Round([Z], 0)",          mathData, expected: -4.0);
-RunTest("Max(X, Y)",     "Max([X], [Y])",          mathData, expected: 9L);
-RunTest("Min(X, Y)",     "Min([X], [Y])",          mathData, expected: 2L);
+RunTest("Max(X, Y)",     "Max([X], [Y])",          mathData, expected: 9);
+RunTest("Min(X, Y)",     "Min([X], [Y])",          mathData, expected: 2);
 RunTest("Log(X, 10)",    "Log([X], 10)",           mathData);       // Log(value, base)
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -324,9 +324,54 @@ RunTest("Expiry check: DATEDIFF > 0 AND end is a weekday",
     dateData, expected: true);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 9. Error / Edge-Case Handling
+// 9. in / not in Operator
 // ─────────────────────────────────────────────────────────────────────────────
-Section("9. Error & Edge-Case Handling");
+Section("9. in / not in Operator");
+
+// Reuse boolData (Age=22, Score=55) and stringData (Status='active', Role='Admin')
+
+// --- Numeric in ---
+RunTest("Age in list (hit)",           "[Age] in (18, 22, 25, 30)",         boolData, expected: true);
+RunTest("Age in list (miss)",          "[Age] in (30, 35, 40)",             boolData, expected: false);
+RunTest("Score in list (hit)",         "[Score] in (50, 55, 60)",           boolData, expected: true);
+RunTest("Score in list (miss)",        "[Score] in (90, 95, 100)",          boolData, expected: false);
+RunTest("Age not in list (hit)",       "[Age] not in (30, 35, 40)",         boolData, expected: true);
+RunTest("Age not in list (miss)",      "[Age] not in (18, 22, 25)",         boolData, expected: false);
+
+// --- String in ---
+RunTest("Status in list (hit)",        "[Status] in ('active', 'pending', 'review')",   stringData, expected: true);
+RunTest("Status in list (miss)",       "[Status] in ('banned', 'suspended')",            stringData, expected: false);
+RunTest("Role in list (hit)",          "[Role] in ('Admin', 'Manager', 'Owner')",        stringData, expected: true);
+RunTest("Role in list (miss)",         "[Role] in ('User', 'Guest')",                    stringData, expected: false);
+RunTest("Status not in list (hit)",    "[Status] not in ('banned', 'suspended')",        stringData, expected: true);
+RunTest("Status not in list (miss)",   "[Status] not in ('active', 'pending')",          stringData, expected: false);
+RunTest("Country in list (hit)",       "[Country] in ('US', 'CA', 'GB', 'AU')",         stringData, expected: true);
+RunTest("Tag not in banned list",      "[Tag] not in ('spam', 'blocked', 'removed')",   stringData, expected: true);
+
+// --- in combined with AND / OR ---
+RunTest("Age in list AND Score in list",
+    "[Age] in (18, 22, 25) && [Score] in (50, 55, 60)",             boolData, expected: true);
+RunTest("Age in list AND Score NOT in list",
+    "[Age] in (18, 22, 25) && [Score] not in (90, 95, 100)",        boolData, expected: true);
+RunTest("Age NOT in list OR Score in list",
+    "[Age] not in (30, 35, 40) || [Score] in (90, 95, 100)",        boolData, expected: true);
+RunTest("Status in list AND Role in list",
+    "[Status] in ('active', 'pending') && [Role] in ('Admin', 'Manager')",
+    stringData, expected: true);
+RunTest("Status in list OR Role in list (both false)",
+    "[Status] in ('banned') || [Role] in ('Guest')",                stringData, expected: false);
+
+// --- in with NOT brackets ---
+RunTest("NOT (Age in list)",
+    "!([Age] in (30, 35, 40))",                                     boolData, expected: true);
+RunTest("NOT (Status in banned list) AND Role in allowed list",
+    "!([Status] in ('banned', 'suspended')) && [Role] in ('Admin', 'Manager', 'Owner')",
+    stringData, expected: true);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 10. Error / Edge-Case Handling
+// ─────────────────────────────────────────────────────────────────────────────
+Section("10. Error & Edge-Case Handling");
 
 // Missing parameter — NCalc returns null for an unset parameter
 var errorData = new Dictionary<string, string> { ["X"] = "10" };
